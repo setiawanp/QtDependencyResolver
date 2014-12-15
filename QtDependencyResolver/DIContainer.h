@@ -36,8 +36,7 @@ namespace QtDependencyResolver
         virtual ~DIContainer();
 
         template <typename ResolvableType, typename Type>
-        void Bind()
-        {
+        void Bind() {
             QObject* objectFromType = static_cast<Type*>(0); Q_UNUSED(objectFromType);
             QObject* objectFromResolvableType = static_cast<ResolvableType*>(0); Q_UNUSED(objectFromResolvableType);
             ResolvableType* resolvableTypeFromType = static_cast<Type*>(0); Q_UNUSED(resolvableTypeFromType);
@@ -60,10 +59,10 @@ namespace QtDependencyResolver
         ResolvableType* Resolve()
         {
             QObject* resolvableTypeToObjectCastCheck = static_cast<ResolvableType*>(0); Q_UNUSED(resolvableTypeToObjectCastCheck);
-            return qobject_cast<ResolvableType*>(ResolveMetaobject(static_cast<ResolvableType*>(0)->staticMetaObject));
+            return qobject_cast<ResolvableType*>(ResolveMetaObject(static_cast<ResolvableType*>(0)->staticMetaObject));
         }
 
-        QObject* ResolveMetaobject(QMetaObject metaObject);
+        QObject* ResolveMetaObject(QMetaObject metaObject);
 
     private:
         void ClassBind(const QMetaObject &resolvableTypeMeta, const QMetaObject &typeMeta);
