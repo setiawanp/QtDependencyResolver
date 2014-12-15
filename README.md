@@ -24,8 +24,9 @@ You could bind **Singleton** object by passing Scope `DIContainer::SINGLETON` to
     resolver->Bind<IUsersService, LocalUsersService>(DIContainer::SINGLETON);
 	resolver->Bind<IUsersRepository, MongoDBUsersRepository>(DIContainer::SINGLETON);
 
-*(By passing `DIContainer::Singleton` Scope, we will make sure the object created by **DIContainer** will always be the same object)*
-*Note: If no Scope specified in Bind method's first parameter, **DIContainer** will use `DIContainer::NO_SCOPE`*
+*(By passing `DIContainer::Singleton` Scope, we will make sure the object created by __DIContainer__ will always be the same object)*
+
+*Note: If no Scope specified in Bind method's first parameter, __DIContainer__ will use `DIContainer::NO_SCOPE`*
 
 
 Then for resolving your interfaces or base classes you must use the **Resolve** method:
