@@ -9,6 +9,8 @@ You can bind your interfaces and base classes to a concrete implementation and r
 
 ## Usage
 
+### Bind
+
 There are two available **Scope**:
 	`DIContainer::NO_SCOPE` and `DIContainer::SINGLETON`
 
@@ -29,12 +31,15 @@ You could bind **Singleton** object by passing Scope `DIContainer::SINGLETON` to
 *Note: If no Scope specified in Bind method's first parameter, __DIContainer__ will use `DIContainer::NO_SCOPE`*
 
 
+### Resolve
+
 Then for resolving your interfaces or base classes you must use the **Resolve** method:
 
     IUserService* userService = resolver->Resolve<IUsersService>();
 
 **Note:** *Only constructors that are declared with the Q_INVOKABLE modifier are made available to be invoked using QMetaObject::invokeMethod() through the meta-object system.
 For more details look on DIContainerTest.cpp in DependencyResolver-Tests library.*
+
 
 ## Resources
 
