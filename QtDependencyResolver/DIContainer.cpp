@@ -68,6 +68,40 @@ public:
     virtual ~P() {
     }
 
+    void RegisterSingletonMetaObject(const QString &typeName, const QMetaObject &metaObject) {
+        _singletonMetaObjects.insert(typeName, metaObject);
+    }
+
+    bool ContainsSingletonMetaObject(const QString &typeName) {
+        return _singletonMetaObjects.contains(typeName);
+    }
+
+    QMetaObject GetSingletonMetaObject(const QString &typeName) {
+        return ContainsSingletonMetaObject(typeName)?
+                    _singletonMetaObjects.value(typeName) :
+                    QMetaObject();
+    }
+
+    void RegisterSingletonValue(const QString &typeName, QObject* const &value) {
+        if (!_singletonObjects.contains(typeName)) {
+            _singletonObjects.insert(typeName, value);
+        }
+    }
+
+    bool ContainsSingletonValue(const QString &typeName) {
+        if (!_singletonObjects.contains(typeName)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    QObject* GetSingletonValue(const QString &typeName) {
+        return ContainsSingletonValue(typeName)?
+                    _singletonObjects[typeName] :
+                    NULL;
+    }
+
     void RegisterMetaObject(const QString &typeName, const QMetaObject &metaObject) {
         _metaObjects.insert(typeName, metaObject);
     }
@@ -107,16 +141,29 @@ public:
     }
 
     QObject* ResolveByName(QString typeName) {
-        if (typeName.endsWith("*")) {
-            typeName.chop(1);
-        }
+        typeName = typeName.replace("*", "");
+        typeName = typeName.replace("&", "");
 
-        if (!ContainsMetaObject(typeName)) {
+        DIContainer::Scope scope = DIContainer::NO_SCOPE;
+        if (ContainsSingletonMetaObject(typeName)) {
+            scope = DIContainer::SINGLETON;
+        }
+        else if (ContainsMetaObject(typeName)) {
+            scope = DIContainer::NO_SCOPE;
+        }
+        else {
             qDebug("DIContainer: %s is not registered or may be you forgot specify namespace in constructor!", qPrintable(typeName));
             return NULL;
         }
 
-        QMetaObject metaObject = GetMetaObject(typeName);
+        if (scope == DIContainer::SINGLETON)
+            return ResolveSingleton(GetSingletonMetaObject(typeName));
+        else
+            return ResolveNoScope(GetMetaObject(typeName));
+
+    }
+
+    QObject* ResolveNoScope(const QMetaObject& metaObject) {
         QMetaMethod constructorType = metaObject.constructor(0);
         QList<CtorArgPtr> ctorArguments;
 
@@ -151,7 +198,7 @@ public:
             ctorArguments << ctorArg;
         }
 
-        QObject *instance = metaObject.newInstance(ctorArguments[0]->toQArg(), ctorArguments[1]->toQArg(), ctorArguments[2]->toQArg(), ctorArguments[3]->toQArg(), ctorArguments[4]->toQArg(),
+        QObject  *instance = metaObject.newInstance(ctorArguments[0]->toQArg(), ctorArguments[1]->toQArg(), ctorArguments[2]->toQArg(), ctorArguments[3]->toQArg(), ctorArguments[4]->toQArg(),
                 ctorArguments[5]->toQArg(),ctorArguments[6]->toQArg(),ctorArguments[7]->toQArg(),ctorArguments[8]->toQArg(),ctorArguments[9]->toQArg());
 
         if (!instance) {
@@ -162,7 +209,23 @@ public:
         return instance;
     }
 
+    QObject* ResolveSingleton(const QMetaObject& metaObject) {
+        QString typeName = metaObject.className();
+        if (ContainsSingletonValue(typeName)) {
+            //qDebug("Get singleton instance %s", qPrintable(metaObject.className()));
+            return GetSingletonValue(typeName);
+        }
+        else {
+            QObject* object = ResolveNoScope(metaObject);
+            RegisterSingletonValue(typeName, object);
+            return object;
+        }
+    }
+
 private:
+    QHash<QString, QMetaObject> _singletonMetaObjects;
+    QHash<QString, QObject*> _singletonObjects;
+
     QHash<QString, QMetaObject> _metaObjects;
     QHash<QString, QHash<QString, QVariant> > _objects;
 };
@@ -175,18 +238,37 @@ DIContainer::DIContainer(QObject *parent) :
 DIContainer::~DIContainer() {
 }
 
-QObject *DIContainer::ResolveMetaObject(QMetaObject metaObject) {
+QObject *DIContainer::ResolveByClassName(const QString &className) {
+    return _d->ResolveByName(className);
+}
+
+QObject *DIContainer::ResolveMetaobject(QMetaObject metaObject)
+{
     return _d->ResolveByName(metaObject.className());
 }
 
-void DIContainer::ClassBind(const QMetaObject &resolvableTypeMeta, const QMetaObject &typeMeta) {
-    _d->RegisterMetaObject(resolvableTypeMeta.className(), typeMeta);
+void DIContainer::ClassBind(const QMetaObject &resolvableTypeMeta,
+                            const QMetaObject &typeMeta,
+                            const DIContainer::Scope &scope) {
+    if (scope == DIContainer::NO_SCOPE)
+        _d->RegisterMetaObject(resolvableTypeMeta.className(), typeMeta);
+    else
+        _d->RegisterSingletonMetaObject(resolvableTypeMeta.className(), typeMeta);
 }
 
-void DIContainer::ClassBind(const QMetaObject &typeMeta) {
-    _d->RegisterMetaObject(typeMeta.className(), typeMeta);
+void DIContainer::ClassBind(const QMetaObject &typeMeta,
+                            const DIContainer::Scope &scope) {
+    if (scope == DIContainer::NO_SCOPE)
+        _d->RegisterMetaObject(typeMeta.className(), typeMeta);
+    else
+        _d->RegisterSingletonMetaObject(typeMeta.className(), typeMeta);
 }
 
 void DIContainer::ValueBind(const QString &key, const QVariant &value) {
     _d->RegisterValue(value.typeName(), key, value);
+}
+
+void DIContainer::ValueBind(const QMetaObject &typeMeta, QObject* const &value) {
+    _d->RegisterSingletonMetaObject(typeMeta.className(), typeMeta);
+    _d->RegisterSingletonValue(typeMeta.className(), value);
 }

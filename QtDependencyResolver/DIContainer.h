@@ -32,22 +32,34 @@ namespace QtDependencyResolver
     {
         Q_OBJECT
     public:
+        enum Scope {
+            NO_SCOPE,
+            SINGLETON,
+        };
+
         explicit DIContainer(QObject *parent = 0);
         virtual ~DIContainer();
 
         template <typename ResolvableType, typename Type>
-        void Bind() {
+        void Bind(const DIContainer::Scope& scope = DIContainer::NO_SCOPE)
+        {
             QObject* objectFromType = static_cast<Type*>(0); Q_UNUSED(objectFromType);
             QObject* objectFromResolvableType = static_cast<ResolvableType*>(0); Q_UNUSED(objectFromResolvableType);
             ResolvableType* resolvableTypeFromType = static_cast<Type*>(0); Q_UNUSED(resolvableTypeFromType);
-            ClassBind(static_cast<ResolvableType*>(0)->staticMetaObject, static_cast<Type*>(0)->staticMetaObject);
+            ClassBind(static_cast<ResolvableType*>(0)->staticMetaObject, static_cast<Type*>(0)->staticMetaObject, scope);
         }
 
         template <typename Type>
-        void Bind()
+        void Bind(const DIContainer::Scope& scope = DIContainer::NO_SCOPE)
         {
             QObject* objectFromType = static_cast<Type*>(0); Q_UNUSED(objectFromType);
-            ClassBind(static_cast<Type*>(0)->staticMetaObject);
+            ClassBind(static_cast<Type*>(0)->staticMetaObject, scope);
+        }
+
+        template <typename Type>
+        void BindSingleton(QObject* const &value)
+        {
+            ValueBind(static_cast<Type*>(0)->staticMetaObject, value);
         }
 
         void Bind(const QString &key, const QVariant &value)
@@ -59,15 +71,22 @@ namespace QtDependencyResolver
         ResolvableType* Resolve()
         {
             QObject* resolvableTypeToObjectCastCheck = static_cast<ResolvableType*>(0); Q_UNUSED(resolvableTypeToObjectCastCheck);
-            return qobject_cast<ResolvableType*>(ResolveMetaObject(static_cast<ResolvableType*>(0)->staticMetaObject));
+            return qobject_cast<ResolvableType*>(ResolveMetaobject(static_cast<ResolvableType*>(0)->staticMetaObject));
         }
 
-        QObject* ResolveMetaObject(QMetaObject metaObject);
+        QObject* ResolveByClassName(const QString& className);
+
+        QObject* ResolveMetaobject(QMetaObject metaObject);
 
     private:
-        void ClassBind(const QMetaObject &resolvableTypeMeta, const QMetaObject &typeMeta);
-        void ClassBind(const QMetaObject &typeMeta);
+        void ClassBind(const QMetaObject &resolvableTypeMeta,
+                       const QMetaObject &typeMeta,
+                       const DIContainer::Scope &scope);
+        void ClassBind(const QMetaObject &typeMeta,
+                       const DIContainer::Scope &scope);
         void ValueBind(const QString &key, const QVariant &value);
+        void ValueBind(const QMetaObject &typeMeta,
+                       QObject* const &value);
 
     private:
         class P; QSharedPointer<P> _d;
