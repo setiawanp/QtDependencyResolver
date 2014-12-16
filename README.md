@@ -20,7 +20,7 @@ To bind your classes you must create a **DIContainer** instance and use the **Bi
 	
 **Bind** method receives 1 optional parameter with type of `DIContainer::Scope`. Currently, there are two available `DIContainer::Scope`:
 
-	`DIContainer::NO_SCOPE` and
+	`DIContainer::NO_SCOPE`
 	
 	`DIContainer::SINGLETON`
 	
