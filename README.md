@@ -19,7 +19,9 @@ To bind your classes you must create a **DIContainer** instance and use the **Bi
 	
 	
 **Bind** method receives 1 optional parameter with type of `DIContainer::Scope`. Currently, there are two available `DIContainer::Scope`:
+
 	`DIContainer::NO_SCOPE` and
+	
 	`DIContainer::SINGLETON`
 	
 By default, **Bind** will use `DIContainer::NO_SCOPE` if no Scope specified, which means every __DIContainer__ resolve will return another new object.
