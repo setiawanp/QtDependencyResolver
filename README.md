@@ -11,24 +11,24 @@ You can bind your interfaces and base classes to a concrete implementation and r
 
 ### Bind
 
-There are two available **Scope**:
-	`DIContainer::NO_SCOPE` and `DIContainer::SINGLETON`
-
 To bind your classes you must create a **DIContainer** instance and use the **Bind** method:
     
     DIContainer* resolver = new DIContainer();
     resolver->Bind<IUsersService, LocalUsersService>();
     resolver->Bind<IUsersRepository, MongoDBUsersRepository>();
 	
-You could bind **Singleton** object by passing Scope `DIContainer::SINGLETON` to **Bind** method's first parameter:
+	
+**Bind** method receives 1 optional parameter with type of `DIContainer::Scope`. Currently, there are two available `DIContainer::Scope`:
+	`DIContainer::NO_SCOPE` and
+	`DIContainer::SINGLETON`
+	
+By default, **Bind** will use `DIContainer::NO_SCOPE` if no Scope specified, which means every __DIContainer__ resolve will return another new object.
+	
+By passing `DIContainer::Singleton` Scope, we will make sure the object resolved by __DIContainer__ will always return the same object (Singleton):
 
 	DIContainer* resolver = new DIContainer();
     resolver->Bind<IUsersService, LocalUsersService>(DIContainer::SINGLETON);
 	resolver->Bind<IUsersRepository, MongoDBUsersRepository>(DIContainer::SINGLETON);
-
-*(By passing `DIContainer::Singleton` Scope, we will make sure the object created by __DIContainer__ will always be the same object)*
-
-*Note: If no Scope specified in Bind method's first parameter, __DIContainer__ will use `DIContainer::NO_SCOPE`*
 
 
 ### Resolve
