@@ -217,6 +217,8 @@ public:
         }
         else {
             QObject* object = ResolveNoScope(metaObject);
+			object->setParent(this);
+			
             RegisterSingletonValue(typeName, object);
             return object;
         }
