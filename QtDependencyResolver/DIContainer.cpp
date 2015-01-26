@@ -32,6 +32,7 @@ public:
 
     CtorArg(QString name, QVariant value):
         _name(name.toUtf8()),
+        _data(NULL),
         _value(value),
         _hasValue(true) {
     }
@@ -167,6 +168,8 @@ public:
         QMetaMethod constructorType = metaObject.constructor(0);
         QList<CtorArgPtr> ctorArguments;
 
+        QList<QObject*> noScopeObjects;
+
         for (quint8 index = 0; index < 10; index++) {
             if (index >= constructorType.parameterTypes().count()) {
                 CtorArgPtr ctorArg(new CtorArg("", 0));
@@ -194,6 +197,12 @@ public:
                 return NULL;
             }
 
+            //No scope resolved object won't have parent, so store it to a temporary list for setting their parent later
+            if (argValue->parent() == NULL) {
+                qDebug("DIContainer: %s parent will be set to %s", qPrintable(argType), qPrintable(metaObject.className()));
+                noScopeObjects.append(argValue);
+            }
+
             CtorArgPtr ctorArg(new CtorArg(argType, static_cast<void *>(argValue)));
             ctorArguments << ctorArg;
         }
@@ -204,7 +213,12 @@ public:
         if (!instance) {
             qDebug("DIContainer: could not create an instance of class %s", metaObject.className());
             return NULL;
+        } else {
+            foreach (QObject* object, noScopeObjects) {
+                object->setParent(instance);
+            }
         }
+        noScopeObjects.clear();
 
         return instance;
     }
@@ -218,7 +232,7 @@ public:
         else {
             QObject* object = ResolveNoScope(metaObject);
 			object->setParent(this);
-			
+
             RegisterSingletonValue(typeName, object);
             return object;
         }
